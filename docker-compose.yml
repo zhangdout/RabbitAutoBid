@@ -1,0 +1,13 @@
+# docker compose up -d
+services:
+  # 使用官方的 PostgreSQL 镜像，这个名字必须是 Docker Hub 上的镜像名称
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_PASSWORD=postgrespw
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgres/data
+volumes:
+  pgdata:
