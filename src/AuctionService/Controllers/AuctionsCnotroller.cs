@@ -56,6 +56,10 @@ public class AuctionsController : ControllerBase
     public async Task<ActionResult<AuctionDto>> CreateAuction(CreateAuctionDto auctionDto)
     {
         var auction = _mapper.Map<Auction>(auctionDto);
+
+        // TODO: add current user as seller
+        auction.Seller = "test";
+
         _context.Auctions.Add(auction);
         // Add 方法仅在内存中标记对象状态为待新增（Added），并不会立即执行数据库操作
         // SaveChanges 方法才会真正执行数据库命令（如INSERT）持久化数据到数据库中。
