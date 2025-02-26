@@ -128,4 +128,30 @@ public class AuctionsController : ControllerBase
 
         return BadRequest("Problem saving changes.");
     }
+
+    [HttpDelete]
+    public async Task<IActionResult> DeleteAuction(Guid id)
+    {
+        var auction = await _context.Auctions.FindAsync(id);
+
+        if (auction == null)
+        {
+            return NotFound();
+        }
+
+        // 这行代码的作用是将 auction 标记为 "Deleted" 状态，并不会立即从数据库中删除数据，而是等待 SaveChangesAsync() 时真正执行 DELETE 语句。
+
+        _context.Auctions.Remove(auction);
+
+        // 执行 await _context.SaveChangesAsync(); 之后，EF Core 执行的 SQL 语句类似于：DELETE FROM Auctions WHERE Id = 'some-guid-id';
+
+        var result = await _context.SaveChangesAsync() > 0;
+
+        if (result)
+        {
+            return Ok();
+        }
+
+        return BadRequest("Could not update DB.");
+    }
 }
