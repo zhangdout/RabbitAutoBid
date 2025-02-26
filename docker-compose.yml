@@ -1,4 +1,15 @@
-# docker compose up -d
+# docker compose up -d 创建容器启动 docker-compose.yml 文件中定义的所有服务的命令，并且以后台模式运行。
+# docker ps 查看运行中的服务
+# docker stats 检查内存占用
+# docker-compose stop 暂停容器，不删除容器。释放内存。
+# docker-compose start 暂停之后重新启动
+# docker-compose down 停止并删除所有容器。默认不会删除数据卷volume。你不再需要容器，希望彻底清理它们。你要更新 docker-compose.yml 并重新创建容器。
+# docker volume ls 查看所有volume
+
+
+# Docker Compose 允许在一个 docker-compose.yml 文件中定义多个服务（services）。
+# 每个服务都会运行在自己的独立容器中，它们之间不会互相干扰。
+# Docker 网络 会让它们可以相互通信，但默认情况下不会暴露给外部，除非通过 ports 进行端口映射。
 services:
   # 使用官方的 PostgreSQL 镜像，这个名字必须是 Docker Hub 上的镜像名称
   postgres:
@@ -8,6 +19,17 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - pgdata:/var/lib/postgres/data
+      - pgdata:/var/lib/postgresql/data
+
+  mongodb:
+    image: mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=mongopw
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodata:/data/db
 volumes:
   pgdata:
+  mongodata:
