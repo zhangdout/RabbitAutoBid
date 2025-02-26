@@ -10,6 +10,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AuctionService.Controllers;
 
+/*
+[ApiController] -- 数据注解Data Annotations
+自动验证 ModelState（不需要手动 if (!ModelState.IsValid)）。
+自动从 Body 绑定复杂类型（例如 UpdateAuctionDto）。
+自动从 Route 绑定 id（如果 HttpPut("{id}") 匹配）。
+自动返回 400 错误（如果 DTO 绑定失败）。
+
+可能导致 400 Bad Request 的情况：
+请求头 Content-Type 不正确。如果客户端发送的数据不是 application/json，会导致 400
+DTO 绑定失败：如果 UpdateAuctionDto 有 [Required] 修饰的字段，缺少字段会导致 400 Bad Request
+*/
+
 [ApiController]
 [Route("api/auctions")]
 public class AuctionsController : ControllerBase
@@ -82,6 +94,8 @@ public class AuctionsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateAuction(Guid id, UpdateAuctionDto updateAuctionDto)
     {
+        // 这个查询会在内存中创建 auction 对象，并且 EF Core 会开始**跟踪（Tracking）**这个对象。
+
         var auction = await _context.Auctions.
             Include(x => x.Item).
             FirstOrDefaultAsync(x => x.Id == id);
@@ -93,11 +107,17 @@ public class AuctionsController : ControllerBase
 
         // TODO: check seller == username
 
+        // 这里修改了 Item 的 Make 属性，但EF Core 仍然在跟踪 auction，它知道 Make 被修改了。
+
         auction.Item.Make = updateAuctionDto.Make ?? auction.Item.Make;
         auction.Item.Model = updateAuctionDto.Model ?? auction.Item.Model;
         auction.Item.Color = updateAuctionDto.Color ?? auction.Item.Color;
         auction.Item.Mileage = updateAuctionDto.Mileage ?? auction.Item.Mileage;
         auction.Item.Year = updateAuctionDto.Year ?? auction.Item.Year;
+
+        // EF Core 自动跟踪（Tracking） 被查询出来的实体，当它的属性被修改时，EF Core 会记录哪些字段被更改，然后在 SaveChangesAsync() 时自动更新到数据库。
+
+        // SaveChangesAsync() 会检查所有被 EF Core 跟踪的对象，如果发现有字段被修改，它就会自动生成 UPDATE SQL 语句并执行。
 
         var result = await _context.SaveChangesAsync() > 0;
 
