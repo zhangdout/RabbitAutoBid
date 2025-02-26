@@ -69,13 +69,43 @@ public class AuctionsController : ControllerBase
             提高数据库性能、事务管理以及代码控制的灵活性。
         */
         var result = await _context.SaveChangesAsync() > 0;
-        if (!result) 
+        if (!result)
         {
             return BadRequest("Could not save changes to the DB.");
         }
         // CreatedAtAction方法返回状态码201 Created，同时可以返回数据给客户端。这里是客户创建的Auction转换成AuctionDto，返回给客户查看这个数据。
         // CreatedAtAction方法第一个参数是string，告诉客户端用于生成新创建资源URL的方法名。第二个参数是object，表示生成URL所需的路由参数。第三个参数是返回的数据，常返回新创建的对象本身。
         // 第二个参数的属性名必须与你指定的Action方法（这里指GetAuctionById）的参数名一致，即id（大小写必须区分）。
-        return CreatedAtAction(nameof(GetAuctionById), new {ID= auction.Id}, _mapper.Map<AuctionDto>(auction));
+        return CreatedAtAction(nameof(GetAuctionById), new { ID = auction.Id }, _mapper.Map<AuctionDto>(auction));
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateAuction(Guid id, UpdateAuctionDto updateAuctionDto)
+    {
+        var auction = await _context.Auctions.
+            Include(x => x.Item).
+            FirstOrDefaultAsync(x => x.Id == id);
+
+        if (auction == null)
+        {
+            return NotFound();
+        }
+
+        // TODO: check seller == username
+
+        auction.Item.Make = updateAuctionDto.Make ?? auction.Item.Make;
+        auction.Item.Model = updateAuctionDto.Model ?? auction.Item.Model;
+        auction.Item.Color = updateAuctionDto.Color ?? auction.Item.Color;
+        auction.Item.Mileage = updateAuctionDto.Mileage ?? auction.Item.Mileage;
+        auction.Item.Year = updateAuctionDto.Year ?? auction.Item.Year;
+
+        var result = await _context.SaveChangesAsync() > 0;
+
+        if (result)
+        {
+            return Ok();
+        }
+
+        return BadRequest("Problem saving changes.");
     }
 }
