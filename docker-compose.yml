@@ -30,6 +30,14 @@ services:
       - 27017:27017
     volumes:
       - mongodata:/data/db
+# 使用volume：
+#数据存储在 Docker 卷（docker volume）中
+#数据不会因容器删除而丢失
+#存储位置由 Docker 管理，适用于持久化数据
+# 不使用volume：
+#数据直接存储在宿主机路径 /var/lib/postgresql/data 和 /data/db
+#可能会导致权限问题
+#路径必须存在，否则 Docker 可能会创建空文件夹
 volumes:
   pgdata:
   mongodata:

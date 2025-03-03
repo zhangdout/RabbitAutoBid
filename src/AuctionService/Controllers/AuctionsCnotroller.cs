@@ -5,6 +5,7 @@ using AuctionService.Data;
 using AuctionService.DTOs;
 using AuctionService.Entities;
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,6 +25,7 @@ DTO 绑定失败：如果 UpdateAuctionDto 有 [Required] 修饰的字段，缺�
 
 [ApiController]
 [Route("api/auctions")]
+//Controller 是 Transient，每次请求创建新的实例
 public class AuctionsController : ControllerBase
 {
     private readonly AuctionDbContext _context;
@@ -36,8 +38,19 @@ public class AuctionsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<AuctionDto>>> GetAuctions()
+    public async Task<ActionResult<List<AuctionDto>>> GetAuctions(string date)
     {
+        //.AsQueryable() → 转换为 IQueryable<Auction>，用于动态查询。
+        //IQueryable<T> 是 C# 延迟执行（Lazy Execution）的查询对象，它允许构造复杂查询，而不会立即执行数据库查询。
+        //只有在最终调用 .ToList(), .FirstOrDefault(), .Count() 等方法时，查询才会真正执行。
+        var query = _context.Auctions.OrderBy(x => x.Item.Make).AsQueryable();
+
+        if (!string.IsNullOrEmpty(date))
+        {
+            query = query.Where(x => x.UpdatedAt.CompareTo(DateTime.Parse(date).ToUniversalTime()) > 0);
+        }
+
+        /*
         // 从数据库中的拍卖表中获取数据
         var auctions = await _context.Auctions //auction的类型是List<Auction>
             .Include(x => x.Item) //Include方法预加载(eager loading)关联的Auction.Item数据到内存中。后续使用不需要再执行查询。            
@@ -45,6 +58,13 @@ public class AuctionsController : ControllerBase
             .ToListAsync(); //如果你使用了await，就必须调用返回Task类型的方法，例如ToListAsync()
 
         return _mapper.Map<List<AuctionDto>>(auctions);
+        */
+
+        //ProjectTo<AuctionDto>（）用 AutoMapper 把 IQueryable<Auction> 转换成 IQueryable<AuctionDto>
+        //query 的类型是 IQueryable<Auction>，因为：_context.Auctions 是 DbSet<Auction>，默认就是 IQueryable<Auction>
+        //只有 ToListAsync() 被调用时，查询才会真正执行
+        //在 AutoMapper 中，_mapper.ConfigurationProvider 不直接存储 MappingProfile，但它包含了 MappingProfile 注册的所有映射规则。
+        return await query.ProjectTo<AuctionDto>(_mapper.ConfigurationProvider).ToListAsync();
     }
 
     [HttpGet("{id}")]

@@ -3,6 +3,7 @@ using System.Text.Json;
 using MongoDB.Driver;
 using MongoDB.Entities;
 using SearchService.Models;
+using SearchService.Services;
 
 namespace SearchService.Data;
 
@@ -34,6 +35,8 @@ public class DbInitializer
 
         var count = await DB.CountAsync<Item>();
 
+        /*
+        // 从预定义的文件中获取seed data
         if (count == 0)
         {
             Console.WriteLine("No data - will attempt to seed.");
@@ -45,5 +48,38 @@ public class DbInitializer
 
             await DB.SaveAsync(items); 
         }
+        */
+
+        //distributed monolith
+        //不是微服务架构
+        // 发送http请求到Auction Service获取seed Data
+
+        /*
+        app.Services.CreateScope() 创建一个 IServiceScope，用于获取 Scoped 或 Transient 类型的依赖
+        using var 让 scope 在代码块结束时自动释放
+        确保获取的 HttpClient 只在当前作用域内有效
+        📌 为什么需要 scope？
+        在 Program.cs 里 app.Services 默认是 Singleton，但 HttpClient 不能是 Singleton
+        AuctionSvcHttpClient 是 Transient 或 Scoped，所以需要 CreateScope() 以获取实例
+        ✅ 这样不会影响应用程序的主服务生命周期
+        */
+
+        List<Item> items = new List<Item>();
+        /*
+        在 ASP.NET Core 依赖注入（Dependency Injection, DI） 中，服务的生命周期主要有三种：
+        Singleton（单例） → 应用程序生命周期内共享同一个实例
+        Scoped（作用域） → 每个 HTTP 请求创建一个新实例
+        Transient（瞬态） → 每次获取都会创建一个新实例
+        */
+        //确保 AuctionSvcHttpClient 由 DI 提供，而不是手动创建
+        using (var scope = app.Services.CreateScope())
+        {
+            var httpClient = scope.ServiceProvider.GetRequiredService<AuctionSvcHttpClient>();
+            items = await httpClient.GetItemsForSearchDb();
+        }
+
+        Console.WriteLine(items.Count + " returned from auction service");
+
+        if (items.Count > 0) await DB.SaveAsync(items);
     } 
 }
