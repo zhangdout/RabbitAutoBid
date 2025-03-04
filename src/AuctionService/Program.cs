@@ -1,5 +1,6 @@
 using AuctionService.Data;
 using Microsoft.EntityFrameworkCore;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +54,14 @@ AutoMapper 配置只需要加载一次
 映射规则不会改变，适合 Singleton
 */
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq( (context, cfg) =>
+    {
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 var app = builder.Build();
 

@@ -19,7 +19,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - /var/lib/postgresql/data
 
   mongodb:
     image: mongo
@@ -29,7 +29,14 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - mongodata:/data/db
+      - /data/db
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672" #管理rabbitmq的web界面。登陆账号和密码可以使用guest
 # 使用volume：
 #数据存储在 Docker 卷（docker volume）中
 #数据不会因容器删除而丢失
@@ -38,6 +45,3 @@ services:
 #数据直接存储在宿主机路径 /var/lib/postgresql/data 和 /data/db
 #可能会导致权限问题
 #路径必须存在，否则 Docker 可能会创建空文件夹
-volumes:
-  pgdata:
-  mongodata:
