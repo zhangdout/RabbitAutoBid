@@ -150,6 +150,8 @@ public class AuctionsController : ControllerBase
 
         // SaveChangesAsync() 会检查所有被 EF Core 跟踪的对象，如果发现有字段被修改，它就会自动生成 UPDATE SQL 语句并执行。
 
+        await _publishEndpoint.Publish(_mapper.Map<AuctionUpdated>(auction));
+
         var result = await _context.SaveChangesAsync() > 0;
 
         if (result)
@@ -175,6 +177,8 @@ public class AuctionsController : ControllerBase
         _context.Auctions.Remove(auction);
 
         // 执行 await _context.SaveChangesAsync(); 之后，EF Core 执行的 SQL 语句类似于：DELETE FROM Auctions WHERE Id = 'some-guid-id';
+
+        await _publishEndpoint.Publish<AuctionDeleted>(new { Id = auction.Id.ToString() });
 
         var result = await _context.SaveChangesAsync() > 0;
 
