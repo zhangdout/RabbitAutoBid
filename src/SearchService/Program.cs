@@ -21,6 +21,15 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq( (context, cfg) =>
     {
+        cfg.ReceiveEndpoint("search-auction-created", e =>
+        {
+            //如果消费者处理消息时发生异常，系统会 最多重试 5 次。
+            //每次重试之间 等待 5 秒。
+            e.UseMessageRetry(r => r.Interval(5,5));
+            //让 search-auction-created 队列的消息被 AuctionCreatedConsumer 处理。
+            e.ConfigureConsumer<AuctionCreatedConsumer>(context);
+        });
+
         cfg.ConfigureEndpoints(context);
     });
 });
