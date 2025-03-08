@@ -27,6 +27,8 @@ builder.Services.AddMassTransit(x =>
             //每次重试之间 等待 5 秒。
             e.UseMessageRetry(r => r.Interval(5,5));
             //让 search-auction-created 队列的消息被 AuctionCreatedConsumer 处理。
+            //如果消费者（Consumer）处理消息时发生异常，并且 重试次数用完，该消息不会丢失，而是被发送到 faultQueue（通常叫 error 队列）。
+            //可以理解为 RabbitMQ 里的 "死信队列"（Dead Letter Queue, DLQ），但它是 MassTransit 自动管理的错误队列。
             e.ConfigureConsumer<AuctionCreatedConsumer>(context);
         });
 
