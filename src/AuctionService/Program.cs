@@ -57,6 +57,15 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddMassTransit(x =>
 {
+    // masstransit每10秒钟从outbox查看一次是否有未发送的消息
+    x.AddEntityFrameworkOutbox<AuctionDbContext>(o =>
+    {
+        o.QueryDelay = TimeSpan.FromSeconds(10);
+
+        o.UsePostgres();
+        o.UseBusOutbox();
+    });
+
     x.UsingRabbitMq( (context, cfg) =>
     {
         cfg.ConfigureEndpoints(context);

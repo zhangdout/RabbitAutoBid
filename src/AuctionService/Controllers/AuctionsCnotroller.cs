@@ -96,8 +96,14 @@ public class AuctionsController : ControllerBase
         // TODO: add current user as seller
         auction.Seller = "test";
 
-        _context.Auctions.Add(auction);
         // Add 方法仅在内存中标记对象状态为待新增（Added），并不会立即执行数据库操作
+        _context.Auctions.Add(auction);
+
+        // 加了outbox之后，.Publish方法不再直接把消息发布到service bus，而是使用EF Core存储在outbox中。因此它变成了transaction的一部分，可以放在,SaveChangesAsync()方法前。
+        var newAuction = _mapper.Map<AuctionDto>(auction);
+
+        await _publishEndpoint.Publish(_mapper.Map<AuctionCreated>(newAuction));
+
         // SaveChanges 方法才会真正执行数据库命令（如INSERT）持久化数据到数据库中。
         /*
             这是 EF Core 中常见的设计模式：Unit of Work（工作单元）模式。
@@ -105,10 +111,6 @@ public class AuctionsController : ControllerBase
             提高数据库性能、事务管理以及代码控制的灵活性。
         */
         var result = await _context.SaveChangesAsync() > 0;
-
-        var newAuction = _mapper.Map<AuctionDto>(auction);
-
-        await _publishEndpoint.Publish(_mapper.Map<AuctionCreated>(newAuction));
 
         if (!result)
         {
