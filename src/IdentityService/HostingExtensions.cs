@@ -80,3 +80,23 @@ internal static class HostingExtensions
         return app;
     }
 }
+
+/*
+identity server进行验证和授权的流程：
+
+1️⃣ 用户认证（Authentication）
+📌 目的：验证用户身份，返回 ID Token 和 Access Token。
+1️⃣ 用户访问客户端（Web App / Mobile App）
+2️⃣ 客户端重定向到 IdentityServer 登录页面
+3️⃣ 用户输入用户名和密码，IdentityServer 验证成功
+4️⃣ IdentityServer 颁发 ID Token 和 Access Token 5️⃣ 客户端存储 Token，并携带 Token 访问 API
+
+2️⃣ 访问受保护 API（Authorization）
+📌 目的：客户端携带 Access Token 访问 API，API 服务器验证 Token，并返回数据。
+1️⃣ 客户端发送 API 请求，带上 Authorization: Bearer Token
+2️⃣ API 服务器验证 Access Token
+    验证签名是否由 IdentityServer 颁发
+    确保 Token 未过期
+    检查 Token 是否有 访问 api 的权限 
+3️⃣ 验证成功，API 返回数据
+*/

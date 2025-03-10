@@ -1,6 +1,7 @@
 using AuctionService.Data;
 using Microsoft.EntityFrameworkCore;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,11 +73,26 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+//仅仅调用 AddAuthentication() 只是 “注册” 服务，并不会让它生效！
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = builder.Configuration["IdentityServiceUrl"];
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters.ValidateAudience = false;
+        options.TokenValidationParameters.NameClaimType = "username";
+    });
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 在 ASP.NET Core 中，身份认证和授权的实现分为 两步： 1️⃣ AddAuthentication() / AddJwtBearer() → 配置认证方式（注册服务）
+//2️⃣ UseAuthentication() / UseAuthorization() → 启用中间件（执行认证和授权）
+//中间件
+//在请求进入 API 之前，解析 Authorization: Bearer ... 头中的 JWT 令牌。
+//正确流程：用户请求 API → 解析 JWT（UseAuthentication）→ 检查权限（UseAuthorization）→ 执行 API 逻辑 → 返回数据
 
-app.UseAuthorization();
+app.UseAuthentication(); //解析JWT
+app.UseAuthorization(); //检查权限
 
 app.MapControllers();
 

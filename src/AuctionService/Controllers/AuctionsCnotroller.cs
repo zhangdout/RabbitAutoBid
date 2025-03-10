@@ -8,6 +8,7 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Contracts;
 using MassTransit;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -86,6 +87,7 @@ public class AuctionsController : ControllerBase
         return _mapper.Map<AuctionDto>(auction);
     }
 
+    [Authorize]
     [HttpPost]
     // 如果不返回数据，只返回状态码，使用Task<IActionResult>更灵活
     // 参数CreateAuctionDto auctionDto来自于客户端发来的http post请求体
@@ -93,8 +95,9 @@ public class AuctionsController : ControllerBase
     {
         var auction = _mapper.Map<Auction>(auctionDto);
 
-        // TODO: add current user as seller
-        auction.Seller = "test";
+        //在 ASP.NET Core 中，User.Identity.Name 代表 当前登录用户的名称，它是从 JWT Token 解析出来的 Claim 值。
+        //User 是 当前 HTTP 请求的用户对象，它是 HttpContext.User 的简写形式。代表当前请求的用户（ClaimsPrincipal）。
+        auction.Seller = User.Identity.Name;
 
         // Add 方法仅在内存中标记对象状态为待新增（Added），并不会立即执行数据库操作
         _context.Auctions.Add(auction);
@@ -122,6 +125,7 @@ public class AuctionsController : ControllerBase
         return CreatedAtAction(nameof(GetAuctionById), new { ID = auction.Id }, newAuction);
     }
 
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateAuction(Guid id, UpdateAuctionDto updateAuctionDto)
     {
@@ -136,7 +140,7 @@ public class AuctionsController : ControllerBase
             return NotFound();
         }
 
-        // TODO: check seller == username
+        if (auction.Seller != User.Identity.Name) return Forbid();
 
         // 这里修改了 Item 的 Make 属性，但EF Core 仍然在跟踪 auction，它知道 Make 被修改了。
 
@@ -162,6 +166,7 @@ public class AuctionsController : ControllerBase
         return BadRequest("Problem saving changes.");
     }
 
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAuction(Guid id)
     {
@@ -171,6 +176,8 @@ public class AuctionsController : ControllerBase
         {
             return NotFound();
         }
+
+        if (auction.Seller != User.Identity.Name) return Forbid();
 
         // 这行代码的作用是将 auction 标记为 "Deleted" 状态，并不会立即从数据库中删除数据，而是等待 SaveChangesAsync() 时真正执行 DELETE 语句。
 
