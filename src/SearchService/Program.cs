@@ -21,6 +21,12 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq( (context, cfg) =>
     {
+        cfg.Host(builder.Configuration["RabbitMq:Host"], "/", h =>
+        {
+            h.Username(builder.Configuration.GetValue("RabbitMQ:Username", "guest")!);
+            h.Password(builder.Configuration.GetValue("RabbitMQ:Password", "guest")!);
+        });
+
         cfg.ReceiveEndpoint("search-auction-created", e =>
         {
             //如果消费者处理消息时发生异常，系统会 最多重试 5 次。
