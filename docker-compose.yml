@@ -75,6 +75,20 @@ services:
       - mongodb
       - rabbitmq
 
+  identity-svc:
+    image: zhangdout/identity-svc:latest
+    build:
+      context: .
+      dockerfile: src/IdentityService/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=postgres; User Id=postgres; Password=postgrespw; Database=identity
+    ports:
+      - 5001:80
+    depends_on:
+      - postgres
+
 # 使用volume：
 #数据存储在 Docker 卷（docker volume）中
 #数据不会因容器删除而丢失
