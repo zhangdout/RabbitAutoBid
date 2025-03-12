@@ -37,6 +37,24 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672" #管理rabbitmq的web界面。登陆账号和密码可以使用guest
+
+  auction-svc:
+    image: zhangdout/auction-svc:latest # 有build命令，会先build并命名为该名字，保存在本地。没有build命令则会远程拉取。
+    build: 
+      context: . # 在RabbitAutoBid目录下构建
+      dockerfile: src/AuctionService/Dockerfile
+    environment: # 会覆盖appsettings.json中的环境变量
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - RabbitMQ__Host=rabbitmq # 双下划线 #直接用上面的服务名称rabbitmq
+      - ConnectionStrings__DefaultConnection=Server=postgres;User Id=postgres;Password=postgrespw;Database=auctions
+      - IdentityServiceUrl=http://identity-svc
+    ports:
+      - 7001:80
+    depends_on: # 等待依赖的服务启动后再启动
+      - postgres
+      - rabbitmq
+
 # 使用volume：
 #数据存储在 Docker 卷（docker volume）中
 #数据不会因容器删除而丢失
