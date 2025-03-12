@@ -1,4 +1,4 @@
-# docker build -f src/AuctionService/Dockerfile -t testing123 . 
+# docker build -f src/AuctionService/Dockerfile -t testing123 .   ---构建镜像
 # 这里.代表当前目录 RabbitAutoBid/。是构建上下文，即COPY/ADD命令访问的目录，从这个目录拷贝东西。
 
 # as build → 这是一个 多阶段构建（第一阶段只用于构建，最终不会出现在生产环境）
