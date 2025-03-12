@@ -89,6 +89,17 @@ services:
     depends_on:
       - postgres
 
+  gateway-svc:
+    image: zhangdout/gateway-svc:latest
+    build:
+      context: .
+      dockerfile: src/GatewayService/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=http://+:80
+    ports:
+      - 6001:80
+
 # 使用volume：
 #数据存储在 Docker 卷（docker volume）中
 #数据不会因容器删除而丢失
