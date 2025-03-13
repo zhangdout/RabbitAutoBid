@@ -31,13 +31,13 @@ DTO 绑定失败：如果 UpdateAuctionDto 有 [Required] 修饰的字段，缺�
 //Controller 是 Transient，每次请求创建新的实例
 public class AuctionsController : ControllerBase
 {
-    private readonly AuctionDbContext _context;
+    private readonly IAuctionRepository _repo;
     private readonly IMapper _mapper;
     private readonly IPublishEndpoint _publishEndpoint;
 
-    public AuctionsController(AuctionDbContext context, IMapper mapper, IPublishEndpoint publishEndpoint)
+    public AuctionsController(IAuctionRepository repo, IMapper mapper, IPublishEndpoint publishEndpoint)
     {
-        _context = context;
+        _repo = repo;
         _mapper = mapper;
         _publishEndpoint = publishEndpoint;
     }
@@ -45,6 +45,9 @@ public class AuctionsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<AuctionDto>>> GetAuctions(string date)
     {
+        return await _repo.GetAuctionsAsync(date);
+
+        /*
         //.AsQueryable() → 转换为 IQueryable<Auction>，用于动态查询。
         //IQueryable<T> 是 C# 延迟执行（Lazy Execution）的查询对象，它允许构造复杂查询，而不会立即执行数据库查询。
         //只有在最终调用 .ToList(), .FirstOrDefault(), .Count() 等方法时，查询才会真正执行。
@@ -69,22 +72,20 @@ public class AuctionsController : ControllerBase
         //query 的类型是 IQueryable<Auction>，因为：_context.Auctions 是 DbSet<Auction>，默认就是 IQueryable<Auction>
         //只有 ToListAsync() 被调用时，查询才会真正执行
         //在 AutoMapper 中，_mapper.ConfigurationProvider 不直接存储 MappingProfile，但它包含了 MappingProfile 注册的所有映射规则。
-        return await query.ProjectTo<AuctionDto>(_mapper.ConfigurationProvider).ToListAsync();
+        // return await query.ProjectTo<AuctionDto>(_mapper.ConfigurationProvider).ToListAsync();
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<AuctionDto>> GetAuctionById(Guid id)
     {
-        var auction = await _context.Auctions
-            .Include(x => x.Item)
-            .FirstOrDefaultAsync(x => x.Id == id);
+        var auction = await _repo.GetAuctionByIdAsync(id);
 
         if (auction == null)
         {
             return NotFound();
         }
 
-        return _mapper.Map<AuctionDto>(auction);
+        return auction;
     }
 
     [Authorize]
@@ -100,7 +101,7 @@ public class AuctionsController : ControllerBase
         auction.Seller = User.Identity.Name;
 
         // Add 方法仅在内存中标记对象状态为待新增（Added），并不会立即执行数据库操作
-        _context.Auctions.Add(auction);
+        _repo.AddAuction(auction);
 
         // 加了outbox之后，.Publish方法不再直接把消息发布到service bus，而是使用EF Core存储在outbox中。因此它变成了transaction的一部分，可以放在,SaveChangesAsync()方法前。
         var newAuction = _mapper.Map<AuctionDto>(auction);
@@ -113,7 +114,7 @@ public class AuctionsController : ControllerBase
             允许批量提交多个更改，一次性地完成所有数据库操作。
             提高数据库性能、事务管理以及代码控制的灵活性。
         */
-        var result = await _context.SaveChangesAsync() > 0;
+        var result = await _repo.SaveChangesAsync();
 
         if (!result)
         {
@@ -131,9 +132,7 @@ public class AuctionsController : ControllerBase
     {
         // 这个查询会在内存中创建 auction 对象，并且 EF Core 会开始**跟踪（Tracking）**这个对象。
 
-        var auction = await _context.Auctions.
-            Include(x => x.Item).
-            FirstOrDefaultAsync(x => x.Id == id);
+        var auction = await _repo.GetAuctionEntityById(id);
 
         if (auction == null)
         {
@@ -156,7 +155,7 @@ public class AuctionsController : ControllerBase
 
         await _publishEndpoint.Publish(_mapper.Map<AuctionUpdated>(auction));
 
-        var result = await _context.SaveChangesAsync() > 0;
+        var result = await _repo.SaveChangesAsync();
 
         if (result)
         {
@@ -170,7 +169,7 @@ public class AuctionsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAuction(Guid id)
     {
-        var auction = await _context.Auctions.FindAsync(id);
+        var auction = await _repo.GetAuctionEntityById(id);
 
         if (auction == null)
         {
@@ -181,13 +180,13 @@ public class AuctionsController : ControllerBase
 
         // 这行代码的作用是将 auction 标记为 "Deleted" 状态，并不会立即从数据库中删除数据，而是等待 SaveChangesAsync() 时真正执行 DELETE 语句。
 
-        _context.Auctions.Remove(auction);
+        _repo.RemoveAuction(auction);
 
         // 执行 await _context.SaveChangesAsync(); 之后，EF Core 执行的 SQL 语句类似于：DELETE FROM Auctions WHERE Id = 'some-guid-id';
 
         await _publishEndpoint.Publish<AuctionDeleted>(new { Id = auction.Id.ToString() });
 
-        var result = await _context.SaveChangesAsync() > 0;
+        var result = await _repo.SaveChangesAsync();
 
         if (result)
         {

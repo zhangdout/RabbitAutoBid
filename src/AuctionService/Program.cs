@@ -94,6 +94,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters.NameClaimType = "username";
     });
 
+builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
+
 var app = builder.Build();
 
 // 在 ASP.NET Core 中，身份认证和授权的实现分为 两步： 1️⃣ AddAuthentication() / AddJwtBearer() → 配置认证方式（注册服务）
