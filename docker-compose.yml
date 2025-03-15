@@ -88,6 +88,7 @@ services:
       - 5001:80
     depends_on:
       - postgres
+    restart: unless-stopped
 
   gateway-svc:
     image: zhangdout/gateway-svc:latest
