@@ -1,5 +1,10 @@
 using System;
+using AutoMapper;
+using BiddingService.DTOs;
 using BiddingService.Models;
+using BiddingService.Services;
+using Contracts;
+using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Entities;
@@ -8,7 +13,8 @@ namespace BiddingService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BidsController : ControllerBase
+public class BidsController(IMapper mapper, IPublishEndpoint publishEndpoint,
+    GrpcAuctionClient grpcClient) : ControllerBase
 {
     [Authorize]
     [HttpPost]
@@ -18,8 +24,9 @@ public class BidsController : ControllerBase
 
         if (auction == null)
         {
-            // TODO
-            return NotFound();
+            auction = grpcClient.GetAuction(auctionId);
+
+            if (auction == null) return BadRequest("Cannot accept bids on this auction at this time");
         }
 
         if (auction.Seller == User.Identity.Name)
@@ -60,6 +67,19 @@ public class BidsController : ControllerBase
 
         await DB.SaveAsync(bid);
 
-        return Ok(bid);
+        await publishEndpoint.Publish(mapper.Map<BidPlaced>(bid));
+
+        return Ok(mapper.Map<BidDto>(bid));
+    }
+
+    [HttpGet("{auctionId}")]
+    public async Task<ActionResult<List<BidDto>>> GetBidsForAuction(string auctionId)
+    {
+        var bids = await DB.Find<Bid>()
+            .Match(a => a.AuctionId == auctionId)
+            .Sort(b => b.Descending(a => a.BidTime))
+            .ExecuteAsync();
+
+        return bids.Select(mapper.Map<BidDto>).ToList();
     }
 }

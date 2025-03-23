@@ -1,6 +1,12 @@
 {
     "cSpell.words": [
+        "appsettings",
+        "aspnet",
         "ASPNETCORE",
-        "mongopw"
+        "INITDB",
+        "mongopw",
+        "postgrespw",
+        "rabbitmq",
+        "zhangdout"
     ]
 }

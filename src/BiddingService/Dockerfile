@@ -13,16 +13,18 @@ COPY src/IdentityService/IdentityService.csproj src/IdentityService/IdentityServ
 COPY src/Contracts/Contracts.csproj src/Contracts/Contracts.csproj
 COPY tests/AuctionService.UnitTests/AuctionService.UnitTests.csproj tests/AuctionService.UnitTests/AuctionService.UnitTests.csproj
 COPY tests/AuctionService.IntegrationTests/AuctionService.IntegrationTests.csproj tests/AuctionService.IntegrationTests/AuctionService.IntegrationTests.csproj
+
 # Restore package deps
 RUN dotnet restore RabbitAutoBid.sln
 
 # Copy the app folders over
-COPY src/IdentityService src/IdentityService
-WORKDIR /app/src/IdentityService
+COPY src/BiddingService src/BiddingService
+COPY src/Contracts src/Contracts
+WORKDIR /app/src/BiddingService
 RUN dotnet publish -c Release -o /app/src/out
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/src/out .
-ENTRYPOINT [ "dotnet", "IdentityService.dll" ]
+ENTRYPOINT [ "dotnet", "BiddingService.dll" ]
