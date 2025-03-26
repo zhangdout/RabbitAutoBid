@@ -3,6 +3,7 @@
         "appsettings",
         "aspnet",
         "ASPNETCORE",
+        "Carimage",
         "INITDB",
         "mongopw",
         "postgrespw",

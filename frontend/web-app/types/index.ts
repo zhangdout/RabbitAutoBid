@@ -9,6 +9,7 @@ export type Auction = {
   seller: string;
   winner?: string;
   soldAmount: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   currentHighBid: any;
   createdAt: string;
   updatedAt: string;
@@ -30,4 +31,12 @@ export type Bid = {
   bidTime: string;
   amount: number;
   bidStatus: string;
+};
+
+export type AuctionFinished = {
+  itemSold: boolean;
+  auctionId: string;
+  winner?: string;
+  seller: string;
+  amount?: number;
 };
