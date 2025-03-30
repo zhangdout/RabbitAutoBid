@@ -4,14 +4,13 @@ const nextConfig: NextConfig = {
   /* config options here */
   logging: {
     fetches: {
-      fullUrl: true
-    }
+      fullUrl: true,
+    },
   },
   images: {
-    remotePatterns: [
-      {protocol: 'https', hostname: 'cdn.pixabay.com'}
-    ]
-  }
+    remotePatterns: [{ protocol: "https", hostname: "cdn.pixabay.com" }],
+  },
+  output: "standalone",
 };
 
 export default nextConfig;

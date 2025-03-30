@@ -1,16 +1,11 @@
 "use client";
 
-import { Button, TextInput } from "flowbite-react";
+import { Button } from "flowbite-react";
 import React, { useEffect } from "react";
 import { FieldValues, useForm } from "react-hook-form";
 import Input from "../components/Input";
 import DateInput from "../components/DateInput";
-import { fetchWrapper } from "../lib/FetchWrapper";
-import {
-  createAuction,
-  updateAuction,
-  updateAuctionTest,
-} from "../actions/auctionActions";
+import { createAuction, updateAuction } from "../actions/auctionActions";
 import { usePathname, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Auction } from "@/types";
@@ -47,6 +42,7 @@ export default function AuctionForm({ auction }: Props) {
 
       if (res.error) throw res.error;
       router.push(`/auctions/details/${id}`);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.status + " " + error.message);
     }
@@ -58,7 +54,7 @@ export default function AuctionForm({ auction }: Props) {
       reset({ make, model, color, mileage, year });
     }
     setFocus("make");
-  }, [setFocus]);
+  }, [auction, reset, setFocus]);
 
   return (
     <form className="flex flex-col mt-3" onSubmit={handleSubmit(onSubmit)}>

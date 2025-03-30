@@ -89,9 +89,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ASPNETCORE_URLS=http://+:80
+      - IssuerUri=https://id.rabbitautobid.local
+      - ClientApp=https://app.rabbitautobid.local
       - ConnectionStrings__DefaultConnection=Server=postgres; User Id=postgres; Password=postgrespw; Database=identity
-    ports:
-      - 5001:80
+      - VIRTUAL_HOST=id.rabbitautobid.local
     depends_on:
       - postgres
     restart: unless-stopped
@@ -104,8 +105,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ASPNETCORE_URLS=http://+:80
-    ports:
-      - 6001:80
+      - ClientApp=https://app.rabbitautobid.local
+      - VIRTUAL_HOST=api.rabbitautobid.local
 
   bid-svc:
     image: zhangdout/bid-svc:latest
@@ -138,6 +139,34 @@ services:
       - 7004:80
     depends_on:
       - rabbitmq
+
+  web-app:
+    image: zhangdout/web-app
+    build: 
+      context: .
+      dockerfile: frontend/web-app/Dockerfile
+    volumes:
+      - /var/lib/web/data
+    environment:
+      - AUTH_SECRET="w1UmiT1Ks+rRKUmPIU1Nkx7NYLnOxW7s2moKDZJN6WI="
+      - API_URL=http://gateway-svc/
+      - ID_URL=https://id.rabbitautobid.local
+      - ID_URL_INTERNAL=http://identity-svc
+      - AUTH_URL=https://app.rabbitautobid.local
+      - AUTH_URL_INTERNAL=http://web-app:3000
+      - NOTIFY_URL=https://api.rabbitautobid.local/notifications
+      - VIRTUAL_HOST=app.rabbitautobid.local
+      - VIRTUAL_PORT=3000
+
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy
+    container_name: nginx-proxy
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./devcerts:/etc/nginx/certs
 
 # 使用volume：
 #数据存储在 Docker 卷（docker volume）中

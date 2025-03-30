@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import AuctionCard from "./AuctionCard";
-import { Auction, PagedResult } from "@/types";
 import AppPagination from "../components/AppPagination";
 import { getData } from "../actions/auctionActions";
 import Filters from "./Filters";
@@ -45,7 +44,7 @@ export default function Listings() {
       setData(data);
       setLoading(false);
     });
-  }, [url]);
+  }, [setData, url]);
 
   if (loading) return <h3>Loading...</h3>;
 

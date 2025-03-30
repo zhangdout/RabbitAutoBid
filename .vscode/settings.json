@@ -4,10 +4,14 @@
         "aspnet",
         "ASPNETCORE",
         "Carimage",
+        "devcerts",
         "INITDB",
         "mongopw",
+        "nginxproxy",
         "postgrespw",
+        "rabbitautobid",
         "rabbitmq",
+        "signalr",
         "zhangdout"
     ]
 }

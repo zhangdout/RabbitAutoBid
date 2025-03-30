@@ -1,12 +1,7 @@
 "use client";
 
 import { useParamsStore } from "@/hooks/useParamsStore";
-import {
-  Button,
-  Dropdown,
-  DropdownDivider,
-  DropdownItem,
-} from "flowbite-react";
+import { Dropdown, DropdownDivider, DropdownItem } from "flowbite-react";
 import { User } from "next-auth";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
@@ -19,19 +14,19 @@ type Props = {
   user: User;
 };
 
-export default function ({ user }: Props) {
+export default function UserActions({ user }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const setParams = useParamsStore((state) => state.setParams);
 
   function setWinner() {
-    setParams({winner: user.username, seller: undefined})
-    if (pathname !== '/') router.push('/');
+    setParams({ winner: user.username, seller: undefined });
+    if (pathname !== "/") router.push("/");
   }
 
   function setSeller() {
-    setParams({winner: undefined, seller: user.username})
-    if (pathname !== '/') router.push('/');
+    setParams({ winner: undefined, seller: user.username });
+    if (pathname !== "/") router.push("/");
   }
 
   return (
