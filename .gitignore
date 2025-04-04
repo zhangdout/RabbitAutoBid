@@ -483,6 +483,9 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
+*.local.key
+*.local.crt
+
 *.key
 *.crt
 *.pem
