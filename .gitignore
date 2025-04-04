@@ -485,9 +485,12 @@ $RECYCLE.BIN/
 
 *.local.key
 *.local.crt
+devcerts/
 
 *.key
 *.crt
+infra/devcerts/
+
 *.pem
 *.p12
 
